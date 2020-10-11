@@ -112,13 +112,18 @@ ANUM = rule(
 from yargy.predicates import custom
 
 def is_address_token(word):
-  match = re.compile('[-a-zA-Zа-яёА-ЯЁ.0-9"«»№]+').match(word)
+  match = re.compile('[-a-zA-Zа-яёА-ЯЁ.0-9"«»№\/]+').match(word)
   if match is None:
     return False
   return match.span()[1] == len(word)
 
+class Something(Settlement):
+    value = value('text')
+
 SOMETHING = rule( #то ли район, то ли город... - набор слов без знаков препинания, возможно с запятой в конце
     custom(is_address_token).repeatable()
+).interpretation(
+    Something
 )
 
 # def is_address_token_extended(word):
@@ -239,17 +244,9 @@ RESPUBLIKA_ADJF = or_(
             'удмуртский',
             'чеченский',
             'чувашский',
+            'карачаево-черкесский',
+            'кабардино-балкарский'
         })
-    ),
-    rule(
-        caseless('карачаево'),
-        DASH.optional(),
-        normalized('черкесский')
-    ),
-    rule(
-        caseless('кабардино'),
-        DASH.optional(),
-        normalized('балкарский')
     )
 ).interpretation(
     Region.name
@@ -278,9 +275,9 @@ RESPUBLIKA_NAME = or_(
         })
     ),
     rule(caseless('марий'), caseless('эл')),
+    rule(caseless('саха'), eq('('), caseless('якутия'), eq(')')),
     rule(
         normalized('северный'),
-        #normalized('осетия'), rule('-', normalized('алания')).optional()
         dictionary({'осетия-алания', 'осетия'}).optional()
     )
 ).interpretation(
@@ -477,6 +474,7 @@ AUTO_OKRUG = or_(
         rule(
             HANTI, AUTO_OKRUG_WORDS, '-', normalized('югра')
         ),
+        rule(HANTI, AUTO_OKRUG_WORDS),
         rule(
             caseless('хмао'),
         ).interpretation(Region.name),
@@ -574,6 +572,32 @@ RAION = or_(
 
 
 # Top 200 Russia cities, cover 75% of population
+
+# COMPLEX = morph_pipeline([
+#     'санкт-петербург',
+#     'нижний новгород',
+#     'н.новгород',
+#     'ростов-на-дону',
+#     'набережные челны',
+#     'улан-удэ',
+#     'нижний тагил',
+#     'комсомольск-на-амуре',
+#     'йошкар-ола',
+#     'старый оскол',
+#     'великий новгород',
+#     'южно-сахалинск',
+#     'петропавловск-камчатский',
+#     'каменск-уральский',
+#     'орехово-зуево',
+#     'сергиев посад',
+#     'новый уренгой',
+#     'ленинск-кузнецкий',
+#     'великие луки',
+#     'каменск-шахтинский',
+#     'усть-илимск',
+#     'усолье-сибирский',
+#     'кирово-чепецк',
+# ])
 
 CITIES_TOWNS = morph_pipeline({'Абаза', 'Абакан', 'Абдулино', 'Абинск', 'Агидель', 'Агрыз', 'Адыгейск', 'Азнакаево', 'Азов', 
     'Ак-Довурак', 'Аксай', 'Алагир', 'Алапаевск', 'Алатырь', 'Алдан', 'Алейск', 'Александров', 'Александровск', 'Александровск-Сахалинский', 
@@ -693,6 +717,194 @@ CITIES_TOWNS = morph_pipeline({'Абаза', 'Абакан', 'Абдулино',
     'Юрюзань', 'Юхнов', 'Юхнов-1', 'Юхнов-2', 'Ядрин', 'Якутск', 'Ялта', 'Ялуторовск', 'Янаул', 'Яранск', 
     'Яровое', 'Ярославль', 'Ярцево', 'Ясногорск', 'Ясный', 'Яхрома'})
 
+# SIMPLE = dictionary({
+#     'москва',
+#     'новосибирск',
+#     'екатеринбург',
+#     'казань',
+#     'самара',
+#     'омск',
+#     'челябинск',
+#     'уфа',
+#     'волгоград',
+#     'пермь',
+#     'красноярск',
+#     'воронеж',
+#     'саратов',
+#     'краснодар',
+#     'тольятти',
+#     'барнаул',
+#     'ижевск',
+#     'ульяновск',
+#     'владивосток',
+#     'ярославль',
+#     'иркутск',
+#     'тюмень',
+#     'махачкала',
+#     'хабаровск',
+#     'оренбург',
+#     'новокузнецк',
+#     'кемерово',
+#     'рязань',
+#     'томск',
+#     'астрахань',
+#     'пенза',
+#     'липецк',
+#     'тула',
+#     'киров',
+#     'чебоксары',
+#     'калининград',
+#     'брянск',
+#     'курск',
+#     'иваново',
+#     'магнитогорск',
+#     'тверь',
+#     'ставрополь',
+#     'симферополь',
+#     'белгород',
+#     'архангельск',
+#     'владимир',
+#     'севастополь',
+#     'сочи',
+#     'курган',
+#     'смоленск',
+#     'калуга',
+#     'чита',
+#     'орёл',
+#     'волжский',
+#     'череповец',
+#     'владикавказ',
+#     'мурманск',
+#     'сургут',
+#     'вологда',
+#     'саранск',
+#     'тамбов',
+#     'стерлитамак',
+#     'грозный',
+#     'якутск',
+#     'кострома',
+#     'петрозаводск',
+#     'таганрог',
+#     'нижневартовск',
+#     'братск',
+#     'новороссийск',
+#     'дзержинск',
+#     'шахта',
+#     'нальчик',
+#     'орск',
+#     'сыктывкар',
+#     'нижнекамск',
+#     'ангарск',
+#     'балашиха',
+#     'благовещенск',
+#     'прокопьевск',
+#     'химки',
+#     'псков',
+#     'бийск',
+#     'энгельс',
+#     'рыбинск',
+#     'балаково',
+#     'северодвинск',
+#     'армавир',
+#     'подольск',
+#     'королёв',
+#     'сызрань',
+#     'норильск',
+#     'златоуст',
+#     'мытищи',
+#     'люберцы',
+#     'волгодонск',
+#     'новочеркасск',
+#     'абакан',
+#     'находка',
+#     'уссурийск',
+#     'березники',
+#     'салават',
+#     'электросталь',
+#     'миасс',
+#     'первоуральск',
+#     'рубцовск',
+#     'альметьевск',
+#     'ковровый',
+#     'коломна',
+#     'керчь',
+#     'майкоп',
+#     'пятигорск',
+#     'одинцово',
+#     'копейск',
+#     'хасавюрт',
+#     'новомосковск',
+#     'кисловодск',
+#     'серпухов',
+#     'новочебоксарск',
+#     'нефтеюганск',
+#     'димитровград',
+#     'нефтекамск',
+#     'черкесск',
+#     'дербент',
+#     'камышин',
+#     'невинномысск',
+#     'красногорск',
+#     'мур',
+#     'батайск',
+#     'новошахтинск',
+#     'ноябрьск',
+#     'кызыл',
+#     'октябрьский',
+#     'ачинск',
+#     'северск',
+#     'новокуйбышевск',
+#     'елец',
+#     'евпатория',
+#     'арзамас',
+#     'обнинск',
+#     'каспийск',
+#     'элиста',
+#     'пушкино',
+#     'жуковский',
+#     'междуреченск',
+#     'сарапул',
+#     'ессентуки',
+#     'воткинск',
+#     'ногинск',
+#     'тобольск',
+#     'ухта',
+#     'серов',
+#     'бердск',
+#     'мичуринск',
+#     'киселёвск',
+#     'новотроицк',
+#     'зеленодольск',
+#     'соликамск',
+#     'раменский',
+#     'домодедово',
+#     'магадан',
+#     'глазов',
+#     'железногорск',
+#     'канск',
+#     'назрань',
+#     'гатчина',
+#     'саров',
+#     'новоуральск',
+#     'воскресенск',
+#     'долгопрудный',
+#     'бугульма',
+#     'кузнецк',
+#     'губкин',
+#     'кинешма',
+#     'ейск',
+#     'реутов',
+#     'железногорск',
+#     'чайковский',
+#     'азов',
+#     'бузулук',
+#     'озёрск',
+#     'балашов',
+#     'юрга',
+#     'кропоткин',
+#     'клин'
+# })
+
 GOROD_ABBR = in_caseless({
     'спб',
     'мск',
@@ -773,11 +985,11 @@ GOROD = or_(
 
 ADJS = gram('ADJS')
 SIMPLE = and_(
-    or_(
-        NOUN,  # Александровка, Заречье, Горки
-        ADJS,  # Кузнецово
-        ADJF,  # Никольское, Новая, Марьино
-    ),
+    # or_(
+    #     NOUN,  # Александровка, Заречье, Горки
+    #     ADJS,  # Кузнецово
+    #     ADJF,  # Никольское, Новая, Марьино
+    # ),
     TITLE
 )
 
@@ -1687,6 +1899,10 @@ STROENIE_WORDS = or_(
         caseless('стр'),
         DOT.optional()
     ),
+    rule(
+        caseless('строен'),
+        DOT.optional()
+    ),
     rule(normalized('строение'))
 ).interpretation(
     Building.type.const('строение')
@@ -1785,6 +2001,7 @@ ADDR_VALUE_FLOOR = or_(
 FLOOR = or_(
     rule(caseless('подвал')),
     rule(ADDR_VALUE_FLOOR, normalized('этаж'), eq(':').optional()),
+    rule(normalized('этаж'), ADDR_VALUE_FLOOR),
     rule(caseless('на'), ADDR_VALUE_FLOOR, caseless('этаже'), eq(':').optional()),
 )
 
@@ -1818,6 +2035,7 @@ ADDR_VALUE_EXTENDED = rule(
 POMESCHENIE = rule(
     or_(
         rule(caseless('пом'), DOT.optional(), eq(':').optional()),
+        rule(caseless('н'), DOT, caseless('п'), DOT),
         rule(normalized('часть').optional(), or_(ADJF, gram('Anum'), gram('PRTF')).optional().repeatable(), normalized('помещение'), eq(':').optional())
     ).interpretation(
         Room.type.const('помещение')
@@ -1834,10 +2052,8 @@ POMESCHENIE = rule(
 
 DOM_WORDS = or_(
     rule(normalized('дом')),
-    rule(
-        caseless('д'),
-        DOT
-    )
+    rule(caseless('д'), DOT),
+    rule(caseless('вл'), DOT)
 ).interpretation(
     Building.type.const('дом')
 )
@@ -1865,6 +2081,87 @@ INDEX = and_(
 )
 
 
+#############
+#
+#   ADDR PART
+#
+############
+
+# AddressInterpretation = fact(
+#     'Address',
+#     [attribute('titles').repeatable()]
+# )
+
+# ADDR_PART = or_(
+#     INDEX,
+#     COUNTRY,
+#     FED_OKRUG,
+
+#     RESPUBLIKA,
+#     KRAI,
+#     OBLAST,
+#     AUTO_OKRUG,
+
+#     RAION,
+#     GOROD,
+#     DEREVNYA,
+#     SELO,
+#     POSELOK,
+
+#     STREET,
+#     PROSPEKT,
+#     PROEZD,
+#     PEREULOK,
+#     PLOSHAD,
+#     SHOSSE,
+#     NABEREG,
+#     BULVAR,
+
+#     DOM,
+#     KORPUS,
+#     STROENIE,
+#     OFIS,
+#     KVARTIRA
+# ).interpretation(
+#     AddrPart.value
+# ).interpretation(
+#     AddrPart
+# )
+
+# class FixedAddrExtractor(AddrExtractor):
+#     def __init__(self, morph):
+#         Extractor.__init__(self, ADDR_PART, morph)
+
+#ТЕСТ
+# from natasha import AddrExtractor, MorphVocab
+# extractor = FixedAddrExtractor(MorphVocab())
+# matches = extractor('район Комсомольский ул Светлая')
+# #print(*matches, sep = '\n')
+# for m in matches:
+#   display(m.tree.as_dot)
+
+# LOCATION = _or(
+#     equal('123')
+# )
+
+FULL_STREET_RULE = rule(
+    or_(
+        STREET, PROSPEKT, PROEZD, PEREULOK, PLOSHAD, SHOSSE, NABEREG, BULVAR
+    ),
+    eq(',').optional(),
+)
+
+FULL_HOUSE_RULE = rule(
+    rule(
+        or_(DOM, KORPUS, STROENIE, OFIS, KVARTIRA, POMESCHENIE, FLOOR, SOMETHING_IN_BRACKETS, QUARTAL),
+        eq(',').optional()
+    ),
+    rule(
+        or_(DOM, KORPUS, STROENIE, OFIS, KVARTIRA, POMESCHENIE, FLOOR, SOMETHING_IN_BRACKETS, QUARTAL, LETTER),
+        eq(',').optional()
+    ).optional().repeatable()
+)
+
 FROM_ADDRESS_TO_HOUSE = rule(
     rule(
         or_(
@@ -1877,20 +2174,10 @@ FROM_ADDRESS_TO_HOUSE = rule(
         SOMETHING.optional(),
         eq(',').optional()
     ).repeatable(),
-    rule(
-        or_(
-            STREET, PROSPEKT, PROEZD, PEREULOK, PLOSHAD, SHOSSE, NABEREG, BULVAR
-        ),
-        eq(',').optional(),
-    ).repeatable().optional(),
-    rule(
-        or_(DOM, KORPUS, STROENIE, OFIS, KVARTIRA, POMESCHENIE, FLOOR, SOMETHING_IN_BRACKETS, QUARTAL),
-        eq(',').optional()
-    ),
-    rule(
-        or_(DOM, KORPUS, STROENIE, OFIS, KVARTIRA, POMESCHENIE, FLOOR, SOMETHING_IN_BRACKETS, QUARTAL, LETTER),
-        eq(',').optional()
-    ).optional().repeatable()
+    or_(
+        rule(FULL_STREET_RULE.repeatable(), FULL_HOUSE_RULE.optional()), #указана улица, дом не обязателен
+        rule(FULL_STREET_RULE.repeatable().optional(), FULL_HOUSE_RULE) #указан дом, улица не обязательна
+    )
 )
 
 ADDR_PART = rule(
@@ -1902,7 +2189,79 @@ from yargy.tokenizer import MorphTokenizer, TokenRule
 
 ADDR_TOKENIZER = MorphTokenizer() \
   .remove_types('RU').add_rules(TokenRule('RU', '[-а-яё]+')) \
-  .remove_types('LATIN').add_rules(TokenRule('RU', '[-a-z]+'))
+  .remove_types('LATIN').add_rules(TokenRule('LATIN', '[-a-z]+'))
   #.remove_types('PUNCT').add_rules(TokenRule('PUNCT', '[\\\\/!#$%&()\\[\\]\\*\\+,\\.:;<=>?@^_`{|}~№…"\\\'«»„“ʼʻ”]')) \
 
-ADDR_PARSER = Parser(ADDR_PART, tokenizer = ADDR_TOKENIZER)
+# TEST_RULE = rule(
+#         or_(DOM, KORPUS, STROENIE, OFIS, KVARTIRA, POMESCHENIE, FLOOR, SOMETHING_IN_BRACKETS, QUARTAL, LETTER),
+#         eq(',').optional()
+#     ).repeatable()
+
+override = None #TEST_RULE #ADDR_VALUE_EXTENDED #PEREULOK #AUTO_OKRUG
+ADDR_PARSER = Parser(override if override else ADDR_PART, tokenizer = ADDR_TOKENIZER)
+
+#функция предобработки: возвращает измененный текст и массив из пар (спан в измененном тексте, исходная последовательность символов), каждый код из словаря встречается в тексте ровно один раз
+number_pattern = r'((№\s+)?\d+(-\d+)?(\/\d+)?[а-я]?)'
+pattern = re.compile(fr'{number_pattern}([,\s]+{number_pattern})+')
+min_length = 3
+def replace_digits_sequences(text):
+  replaced_text_parts = []
+  index_shift = 0
+  code_index = 0
+  for x in re.finditer(pattern, text.lower()):
+    start, end = x.span()
+    if end - start < min_length: continue
+    start += index_shift
+    end += index_shift
+    code = '9' + f'{code_index:03o}' + '9' #девятки с концов, внутри нет девяток, чтобы не случилось коллизий
+    code_index += 1
+    orig_text = text[start:end]
+    text = text[:start] + code + text[end:]
+    replaced_text_parts.append(((start, start + len(code)), orig_text))
+    index_shift += len(code) - len(orig_text)
+  return text, replaced_text_parts
+
+#тест функции предобработки
+text_preprocessed, replaced_text_parts = replace_digits_sequences('Арбитражного Суда неоднократно Краснодарский край, г. Сочи, Лазаревский район,  ул. Сибирская, д. 16, литер А5, помещения № 19/1,19/2,19/3,19/4 разъяснял')
+print(replaced_text_parts)
+for (start, end), orig_text in replaced_text_parts:
+  print(text_preprocessed[start:end], orig_text)
+
+def get_ADDR_PARSER_spans(text):
+  matches = list(ADDR_PARSER.findall(text)) #matches содержат спаны, формы слов и пр. (объекты Match)
+  match_spans = [(m.span.start, m.span.stop) for m in matches] #match_spans содержат только спаны (пары начало-конец)
+  return match_spans
+
+from yargy.span import Span
+def find_address_spans(text): #принимает текст, возвращает массив спанов: [(начало, конец), ...]
+  #return get_ADDR_PARSER_spans(text) #без пред- и постобработки
+  #предобработка
+  text_preprocessed, replaced_text_parts = replace_digits_sequences(text)
+  #поиск адресов
+  match_spans = get_ADDR_PARSER_spans(text_preprocessed)
+  #постобработка
+  def is_inside(span1, span2): #возвращает 'yes' если span1 целиком внутри span2, 'no' если целиком снаружи, 'partly' если частично внутри
+    if span1[0] >= span2[0] and span1[1] <= span2[1]: return 'yes'
+    if span1[1] <= span2[0] or span1[0] >= span2[1]: return 'no'
+    return 'partly'
+  def shift(span, delta): #сдвигаем спан на дельту
+    return (span[0] + delta, span[1] + delta)
+  #перебираем спаны и коды, чтобы изменить границы спанов так, чтобы они соответствовали исходному тексту
+  for match_span_idx, (match_start, match_end) in enumerate(match_spans):
+    prev_match_end = match_spans[match_span_idx - 1][1] if match_span_idx > 0 else 0
+    for code_span, orig_text in replaced_text_parts:
+      delta_for_this_code = len(orig_text) - (code_span[1] - code_span[0])
+      code_before_current_span = is_inside(code_span, (prev_match_end, match_start))
+      code_inside_current_span = is_inside(code_span, (match_start, match_end))
+      if code_before_current_span == 'yes' or code_inside_current_span == 'yes':
+        if code_inside_current_span == 'yes': #смещаем конец текущего спана
+          match_spans[match_span_idx] = (match_start, match_end + delta_for_this_code)
+        #смещаем все спаны после текущего
+        for i in range(match_span_idx + 1, len(match_spans)):
+            match_spans[i] = shift(match_spans[i], delta_for_this_code)
+      elif code_before_current_span == 'partly' or code_inside_current_span == 'partly':
+        #оригинальный текст мы заменили кодом, но он оказался разбит границей одного из матчей
+        #в этом случае мы повторяем распознавание без предобработки
+        print('tried to replace original text by code, but match divides the code into parts; trying without replacing...')
+        return get_match_spans(text)
+  return match_spans #matches
